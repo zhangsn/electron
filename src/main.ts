@@ -1,4 +1,4 @@
-import { app, BrowserWindow,BaseWindow, WebContentsView  } from 'electron';
+import { app, BrowserWindow,BaseWindow, WebContentsView ,ipcMain } from 'electron';
 import path from 'path';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -6,52 +6,48 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
-const createWindow = () => {
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-    },
-  });
-
-  // and load the index.html of the app.
-  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
-  } else {
-    mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
-  }
-
-  // Open the DevTools.
-  mainWindow.webContents.openDevTools();
-};
-const createSubWindow = () => {
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-    },
-  });
-
-  // and load the index.html of the app.
-  if (SUB_WINDOW_VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(SUB_WINDOW_VITE_DEV_SERVER_URL);
-  } else {
-    mainWindow.loadFile(path.join(__dirname, `../renderer/${SUB_WINDOW_VITE_NAME}/index.html`));
-  }
-
-  // Open the DevTools.
-  mainWindow.webContents.openDevTools();
-};
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', ()=>{
-  createSubWindow()
+  const win = new BaseWindow({ width: 800, height: 400 })
+  win.on('resize', () => {
+    const bounds = win.getBounds();
+    tab.setBounds({ x: 0, y: 0, width: bounds.width, height: 50 })
+    main.setBounds({ x: 0, y: 50, width: bounds.width, height: bounds.height - 50 })
+  })
+  const tab = new WebContentsView({
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+    },
+  })
+  const main = new WebContentsView({
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+    },
+  })
+  tab.setBounds({ x: 0, y: 0, width: 800, height: 50 })
+  main.setBounds({ x: 0, y: 50, width: 800, height: 350 })
+  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    main.webContents.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
+  } else {
+    main.webContents.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_DEV_SERVER_URL}/index.html`));
+  }
+  if (TAB_WINDOW_VITE_DEV_SERVER_URL) {
+    tab.webContents.loadURL(TAB_WINDOW_VITE_DEV_SERVER_URL);
+  } else {
+    tab.webContents.loadFile(path.join(__dirname, `../renderer/${TAB_WINDOW_VITE_DEV_SERVER_URL}/index.html`));
+  }
+  win.contentView.addChildView(tab)
+  win.contentView.addChildView(main)
+  ipcMain.on('set-url', (event, url) => {
+    main.webContents.loadURL(url)
+  })
+  main.webContents.setWindowOpenHandler((details) => {
+    main.webContents.loadURL(details.url)
+    return {action: 'deny'}
+  })
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common

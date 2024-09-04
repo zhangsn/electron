@@ -12,7 +12,7 @@ export default defineConfig((env) => {
   const name = forgeConfigSelf.name ?? '';
 
   return {
-    root:path.join(__dirname, "src","pages", "sub"),
+    root:path.join(__dirname, "src","pages", "tab"),
     mode,
     base: './',
     build: {

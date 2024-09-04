@@ -34,8 +34,8 @@ const config: ForgeConfig = {
           config: 'vite.renderer.main.config.ts',
         },
         {
-          name: 'sub_window',
-          config: 'vite.renderer.sub.config.ts',
+          name: 'tab_window',
+          config: 'vite.renderer.tab.config.ts',
         },
       ],
     }),
